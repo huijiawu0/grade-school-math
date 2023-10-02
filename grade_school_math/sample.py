@@ -29,17 +29,17 @@ def extract_answer(completion):
 def main():
     device = th.device("cuda")
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    model = GPT2LMHeadModel.from_pretrained("model_ckpts")
+    model = GPT2LMHeadModel.from_pretrained("model_ckpt_prefix_lr1e3")
     model.to(device)
     print("Model Loaded")
     
-    test_examples = get_examples("test")
+    test_examples = get_examples("train")[:100]
     
     # random_example = random.choice(test_examples)
     # qn = random_example["question"]
     # qn = test_examples[2]["question"]
-    sample_len = 100
-
+    sample_len = 150
+    
     pred_ans = []
     gold_ans = []
     for example in tqdm(test_examples):
@@ -48,6 +48,8 @@ def main():
         ans_ext = extract_answer(ans)
         pred_ans.append(ans_ext)
         gold_ans.append(extract_answer(example["answer"]))
+        print(ans)
+        print(ans_ext, extract_answer(example["answer"]))
     
     print(pred_ans)
     print(gold_ans)
@@ -60,7 +62,8 @@ def main():
             cor += 1
         if pred_ans[i] == INVALID_ANS:
             invalid += 1
-    print(cor, cor / len(list(rg)) * 100, len(rg), invalid)
+    print(cor, cor / len(list(rg)))
+    print(len(rg), invalid)
 
 
 if __name__ == "__main__":
