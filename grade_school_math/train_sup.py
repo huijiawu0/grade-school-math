@@ -38,7 +38,7 @@ class TransformerForLMHead(nn.Module):
         pos_encoded = self.pos_encoder(embedded)
     
         if attention_mask is not None:
-            key_padding_mask = ~attention_mask.bool()
+            key_padding_mask = ~attention_mask.bool().T
         else:
             key_padding_mask = None
     
