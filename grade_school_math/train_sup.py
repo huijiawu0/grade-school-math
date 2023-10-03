@@ -33,15 +33,22 @@ class TransformerForLMHead(nn.Module):
         self.decoder.bias.data.zero_()
         self.decoder.weight.data.uniform_(-init_range, init_range)
 
-    def forward(self, input_ids, mask=None, labels=None):
+    def forward(self, input_ids, attention_mask=None, labels=None):
         embedded = self.embedding(input_ids)
         pos_encoded = self.pos_encoder(embedded)
-        output = self.transformer(pos_encoded, pos_encoded, src_key_padding_mask=mask, tgt_key_padding_mask=mask)
+    
+        if attention_mask is not None:
+            key_padding_mask = ~attention_mask.bool()
+        else:
+            key_padding_mask = None
+    
+        output = self.transformer(pos_encoded, pos_encoded, src_key_padding_mask=key_padding_mask,
+                                  tgt_key_padding_mask=key_padding_mask)
         logits = self.decoder(output)
-
+    
         if labels is not None:
             loss = self.loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
-            return (loss, logits)
+            return loss, logits
         return logits
 
 
