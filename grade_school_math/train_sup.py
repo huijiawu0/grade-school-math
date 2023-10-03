@@ -78,7 +78,7 @@ def main(args):
     
     device = torch.device("cuda")
     # config = GPT2Config.from_pretrained("gpt2")
-    ntokens = len(tokenizer.vocab)
+    ntokens = tokenizer.vocab_size
     model = SimpleTransformer(ntokens, ninp=768, nhead=12, nhid=3072, nlayers=12)
     model.to(device)
 
