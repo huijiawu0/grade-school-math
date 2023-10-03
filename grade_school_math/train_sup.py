@@ -12,50 +12,41 @@ import argparse
 
 
 
-class SimpleTransformer(nn.Module):
-    def __init__(self, ntoken, ninp, nhead, nhid, nlayers, dropout=0.5):
-        super(SimpleTransformer, self).__init__()
-        from torch.nn import TransformerEncoder, TransformerEncoderLayer
-        self.model_type = 'Transformer'
-        self.src_mask = None
-        self.pos_encoder = PositionalEncoding(ninp, dropout)
-        encoder_layers = TransformerEncoderLayer(ninp, nhead, nhid, dropout)
-        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
-        self.encoder = nn.Embedding(ntoken, ninp)
-        self.ninp = ninp
-        self.decoder = nn.Linear(ninp, ntoken)
+import torch.nn as nn
+import math
+
+
+class TransformerForLMHead(nn.Module):
+    def __init__(self, vocab_size, d_model=768, nhead=12, num_layers=12, dim_feedforward=3072):
+        super(TransformerForLMHead, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)
+        self.pos_encoder = PositionalEncoding(d_model)
+        self.transformer = nn.Transformer(d_model, nhead, num_layers, dim_feedforward=dim_feedforward)
+        self.decoder = nn.Linear(d_model, vocab_size)
+        self.loss_fct = nn.CrossEntropyLoss()
 
         self.init_weights()
 
-    def _generate_square_subsequent_mask(self, sz):
-        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
-        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
-        return mask
-
     def init_weights(self):
-        initrange = 0.1
-        self.encoder.weight.data.uniform_(-initrange, initrange)
+        init_range = 0.02
+        self.embedding.weight.data.uniform_(-init_range, init_range)
         self.decoder.bias.data.zero_()
-        self.decoder.weight.data.uniform_(-initrange, initrange)
+        self.decoder.weight.data.uniform_(-init_range, init_range)
 
-    def forward(self, src):
-        if self.src_mask is None or self.src_mask.size(0) != len(src):
-            device = src.device
-            mask = self._generate_square_subsequent_mask(len(src)).to(device)
-            self.src_mask = mask
+    def forward(self, input_ids, mask=None, labels=None):
+        embedded = self.embedding(input_ids)
+        pos_encoded = self.pos_encoder(embedded)
+        output = self.transformer(pos_encoded, pos_encoded, src_key_padding_mask=mask, tgt_key_padding_mask=mask)
+        logits = self.decoder(output)
 
-        src = self.encoder(src) * math.sqrt(self.ninp)
-        src = self.pos_encoder(src)
-        output = self.transformer_encoder(src, self.src_mask)
-        output = self.decoder(output)
-        return output
-
+        if labels is not None:
+            loss = self.loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
+            return (loss, logits)
+        return logits
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, dropout=0.1, max_len=5000):
+    def __init__(self, d_model, max_len=5000):
         super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
-
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
@@ -66,7 +57,8 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         x = x + self.pe[:x.size(0), :]
-        return self.dropout(x)
+        return x
+
 
 
 def main(args):
@@ -78,8 +70,10 @@ def main(args):
     
     device = torch.device("cuda")
     # config = GPT2Config.from_pretrained("gpt2")
+    # model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
+
     ntokens = tokenizer.vocab_size
-    model = SimpleTransformer(ntokens, ninp=768, nhead=12, nhid=3072, nlayers=12)
+    model = TransformerForLMHead(ntokens, ninp=768, nhead=12, nhid=3072, nlayers=12)
     model.to(device)
 
     model_checkpoint_path = "%s/pytorch_model.bin" % args.save_path
