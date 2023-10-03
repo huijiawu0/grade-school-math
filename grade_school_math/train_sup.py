@@ -44,6 +44,7 @@ class TransformerForLMHead(nn.Module):
             return (loss, logits)
         return logits
 
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super(PositionalEncoding, self).__init__()
@@ -73,7 +74,7 @@ def main(args):
     # model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
 
     ntokens = tokenizer.vocab_size
-    model = TransformerForLMHead(ntokens, ninp=768, nhead=12, nhid=3072, nlayers=12)
+    model = TransformerForLMHead(ntokens, d_model=768, nhead=12, num_layers=12, dim_feedforward=3072)
     model.to(device)
 
     model_checkpoint_path = "%s/pytorch_model.bin" % args.save_path
