@@ -5,6 +5,7 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import random
 import re
 from tqdm import tqdm
+import sys
 
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
@@ -29,12 +30,16 @@ def extract_answer(completion):
 def main():
     device = th.device("cuda")
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    model = GPT2LMHeadModel.from_pretrained("model_ckpt_prefix_lr1e3")
+    model_name = sys.argv[1]
+    print("Loading model: ", model_name)
+    model = GPT2LMHeadModel.from_pretrained(model_name)
     model.to(device)
     print("Model Loaded")
     
-    test_examples = get_examples("train")[:100]
-    
+    mode = sys.argv[1]
+    print("mode:", mode)
+    test_examples = get_examples(mode)[:100]
+
     # random_example = random.choice(test_examples)
     # qn = random_example["question"]
     # qn = test_examples[2]["question"]
