@@ -36,7 +36,7 @@ def main():
     model.to(device)
     print("Model Loaded")
     
-    mode = sys.argv[1]
+    mode = sys.argv[2]
     print("mode:", mode)
     test_examples = get_examples(mode)[:100]
 
