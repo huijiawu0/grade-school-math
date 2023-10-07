@@ -17,7 +17,10 @@ def main(args):
     
     device = th.device("cuda")
     config = GPT2Config.from_pretrained("gpt2")
-    model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
+    if args.rand_init:
+        model = GPT2LMHeadModel(config)
+    else:
+        model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
     model.to(device)
 
     model_checkpoint_path = "%s/pytorch_model.bin" % args.save_path
@@ -72,6 +75,8 @@ if __name__ == "__main__":
                         help="Number of warmup steps for learning rate scheduler.")
     parser.add_argument("--loss_on_prefix", action="store_true",
                         help="Compute loss on prefix (for GSMDataset).")
+    parser.add_argument("--rand_init", action="store_true",
+                        help="Rand init")
     parser.add_argument("--save_path", type=str, default="",
                         help="Model save path")
     
