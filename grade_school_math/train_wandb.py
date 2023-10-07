@@ -18,6 +18,7 @@ def main(args):
     device = th.device("cuda")
     config = GPT2Config.from_pretrained("gpt2")
     if args.rand_init:
+        print("Rand init GPT2 weight")
         model = GPT2LMHeadModel(config)
     else:
         model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
