@@ -117,9 +117,11 @@ def train():
 
     train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
+    train_dset.update("labels", train_dset["input_ids"])
     
     eval_examples = get_examples("test")
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
+    eval_dset.update("labels", eval_dset["input_ids"])
     
     data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
     
