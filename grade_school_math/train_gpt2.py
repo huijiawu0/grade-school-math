@@ -11,7 +11,6 @@ import argparse
 def main(args):
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     train_examples = get_examples("train")
-    
     # Pass the loss_on_prefix argument to GSMDataset
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=args.loss_on_prefix)
     
