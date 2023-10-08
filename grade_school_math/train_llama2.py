@@ -27,7 +27,7 @@ import transformers
 from transformers import Trainer
 from transformers.trainer_pt_utils import LabelSmoother
 
-from grade_school_math.dataset import get_examples, GSMDataset
+from dataset import get_examples, GSMDataset
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
