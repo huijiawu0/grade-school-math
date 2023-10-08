@@ -72,4 +72,4 @@ class GSMDataset(th.utils.data.Dataset):
         )
         tokens = th.tensor(tokens)
         mask = th.tensor(mask)
-        return dict(input_ids=tokens, attention_mask=mask)
+        return dict(input_ids=tokens, attention_mask=mask, labels=tokens)
