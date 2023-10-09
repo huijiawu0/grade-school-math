@@ -135,8 +135,8 @@ def train():
     # Save model
     model.config.use_cache = True
     trainer.save_state()
-    trainer_save_model_safe(trainer)
-
+    # trainer_save_model_safe(trainer)
+    trainer.save_model()
 
 if __name__ == "__main__":
     train()
