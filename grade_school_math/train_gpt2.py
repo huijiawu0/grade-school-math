@@ -49,7 +49,7 @@ def main(args):
         for batch in train_loader:
             optim.zero_grad()
             batch = {k: v.to(device) for k, v in batch.items()}
-            outputs = model(**batch, labels=batch["input_ids"])
+            outputs = model(**batch)
             loss = outputs[0]
             loss.backward()
             optim.step()
