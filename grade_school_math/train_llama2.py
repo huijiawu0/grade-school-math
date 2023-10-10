@@ -13,6 +13,11 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import torch
+import time
+import pathlib
+import transformers
+import math
 
 from dataclasses import dataclass, field
 import json
@@ -115,14 +120,19 @@ def train():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
+    start_time = time.time()
+
     train_examples = get_examples(data_args.data_path)
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
-    
+
     eval_examples = get_examples("test.jsonl")
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
+
+    end_time = time.time()
+    print(f"Data loading took {(end_time - start_time):.2f} seconds.")
     
     data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
-    
+
     # Start trainner
     trainer = Trainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
