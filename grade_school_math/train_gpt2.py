@@ -32,7 +32,8 @@ def main(args):
         optim.load_state_dict(th.load(optimizer_checkpoint_path))
     else:
         optim = AdamW(model.parameters(), lr=args.learning_rate)
-    
+
+    model = model.to_bettertransformer()
     model.train()
     train_loader = DataLoader(train_dset, batch_size=args.batch_size, shuffle=True)
     
