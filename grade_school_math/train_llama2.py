@@ -115,10 +115,10 @@ def train():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
-    train_examples = get_examples("train")
+    train_examples = get_examples(data_args.data_path)
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
     
-    eval_examples = get_examples("test")
+    eval_examples = get_examples("data/test.jsonl")
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     
     data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
