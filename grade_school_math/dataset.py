@@ -17,7 +17,7 @@ def get_examples(path):
         ex.update(question=ex["question"] + "\n")
         ex.update(answer=ex["answer"] + "<|endoftext|>")
 
-    print(f"{len(examples)} {path} examples")
+    print(f"{path} got {len(examples)} examples")
     return examples
 
 
