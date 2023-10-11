@@ -40,7 +40,6 @@ def main():
         (ModelArguments, DataArguments, TrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    print(training_args)
     local_rank = training_args.local_rank
 
     # Set RoPE scaling factor
@@ -54,7 +53,6 @@ def main():
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
     config.use_cache = False
 
-    # Load model and tokenizer
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         config=config,
@@ -69,15 +67,13 @@ def main():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
-    model_name = sys.argv[1]
-    print("Loading model: ", model_name)
+    print("Loading model: ", model_args.model_name_or_path)
     device = th.device("cuda")
     model.to(device)
     print("Model Loaded")
     
-    mode = sys.argv[2]
-    print("mode:", mode)
-    test_examples = get_examples(mode)[:100]
+    print("mode:", data_args.eval_data_path)
+    test_examples = get_examples(data_args.eval_data_path)[:100]
 
     # random_example = random.choice(test_examples)
     # qn = random_example["question"]
