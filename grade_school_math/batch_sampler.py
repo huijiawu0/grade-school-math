@@ -74,12 +74,9 @@ def main():
     print("Model Loaded")
     
     print("mode:", data_args.eval_data_path)
-    test_examples = get_examples(data_args.eval_data_path)[:100]
-
     eval_examples = get_examples("test.jsonl")
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
-    eval_loader = DataLoader(eval_dset, batch_size=training_args.batch_size, shuffle=False, num_workers=4)
-    sample_len = 150
+    eval_loader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False, num_workers=4)
     generation_config = GenerationConfig(
         temperature=0.7,
         do_sample=True,
