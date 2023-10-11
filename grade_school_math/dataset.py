@@ -66,5 +66,6 @@ class GSMDataset(th.utils.data.Dataset):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
+        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx],
+                    examples=self.examples[idx])
         # return dict(input_ids=tokens, attention_mask=mask)
