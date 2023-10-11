@@ -54,8 +54,8 @@ class GSMDataset(th.utils.data.Dataset):
         #                      padding="max_length",
         #                      max_length=tokenizer.model_max_length,
         #                      truncation=True)
-        self.qns = tokenizer(self.qns, padding=False)
-        self.ans = tokenizer(self.ans, padding=False)
+        self.qns = tokenizer(self.qns, padding=False, truncation=True)
+        self.ans = tokenizer(self.ans, padding=False, truncation=True)
         self.loss_on_prefix = loss_on_prefix
         self.max_len = max(
             [
