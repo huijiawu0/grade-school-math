@@ -44,22 +44,18 @@ def is_correct(model_completion, gt_example):
 class GSMDataset(th.utils.data.Dataset):
     def __init__(self, tokenizer, examples, loss_on_prefix=True):
         self.examples = examples
-        self.qns = [ex["question"] for ex in self.examples]
-        self.ans = [ex["answer"] for ex in self.examples]
-        # self.qns = tokenizer(self.qns,
-        #                      padding="max_length",
-        #                      max_length=tokenizer.model_max_length,
-        #                      truncation=True)
-        # self.ans = tokenizer(self.ans,
-        #                      padding="max_length",
-        #                      max_length=tokenizer.model_max_length,
-        #                      truncation=True)
-        self.qns = tokenizer(self.qns, padding=False, max_length=tokenizer.model_max_length, truncation=True)
-        self.ans = tokenizer(self.ans, padding=False, max_length=tokenizer.model_max_length, truncation=True)
+        self.qa = [ex["question"] + ex["answer"] for ex in self.examples]
+        self.input_ids = tokenizer(self.qa,
+                                   return_tensors="pt",
+                                   padding="max_length",
+                                   max_length=tokenizer.model_max_length,
+                                   truncation=True).input_ids
         self.loss_on_prefix = loss_on_prefix
+        self.targets = self.input_ids.clone()
+        self.attention_mask = self.input_ids.ne(tokenizer.pad_token_id),
         self.max_len = max(
             [
-                len(self.qns["input_ids"][i]) + len(self.ans["input_ids"][i])
+                len(self.input_ids[i])
                 for i in range(len(self.examples))
             ]
         )
@@ -69,16 +65,5 @@ class GSMDataset(th.utils.data.Dataset):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        qn_tokens = self.qns["input_ids"][idx]
-        ans_tokens = self.ans["input_ids"][idx]
-        pad_tokens = [0] * (self.max_len - len(qn_tokens) - len(ans_tokens))
-        tokens = qn_tokens + ans_tokens + pad_tokens
-        mask = (
-                ([int(self.loss_on_prefix)] * len(qn_tokens))
-                + ([1] * len(ans_tokens))
-                + ([0] * len(pad_tokens))
-        )
-        tokens = th.tensor(tokens)
-        mask = th.tensor(mask)
-        return dict(input_ids=tokens, attention_mask=mask, labels=tokens)
+        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
         # return dict(input_ids=tokens, attention_mask=mask)
