@@ -11,7 +11,7 @@ import re
 from tqdm import tqdm
 import sys
 
-from grade_school_math.train_llama2 import ModelArguments, DataArguments, TrainingArguments
+from train_llama2 import ModelArguments, DataArguments, TrainingArguments
 
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
