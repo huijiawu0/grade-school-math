@@ -50,11 +50,7 @@ def sample(model, qn, tokenizer, device, sample_len):
     
     for _ in range(sample_len):
         with th.no_grad():
-            toks = tokenizer([qn],
-                             return_tensors="pt",
-                             padding="max_length",
-                             max_length=tokenizer.model_max_length,
-                             truncation=True).to(device)
+            toks = tokenizer([qn], padding=False, return_tensors="pt").to(device)
             orig_len = toks["input_ids"].shape[1]
 
             out = model.generate(
