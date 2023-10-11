@@ -68,7 +68,7 @@ def main():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
-    print("Loading model: ", model_args.model_name_or_path)
+    print("loading model: ", model_args.model_name_or_path)
     device = torch.device("cuda")
     model.to(device)
     print("eval_data_path:", data_args.eval_data_path)
@@ -99,7 +99,7 @@ def main():
             pred_ext = extract_answer(pred_ans)
             gold_ans_list.append(gold_ext)
             pred_ans_list.append(pred_ext)
-            print(gold_ext, pred_ext)
+            # print(gold_ext, pred_ext)
             # print("GOLD: ", gold_ans)
             # print("PRED: ", pred_ans)
 
