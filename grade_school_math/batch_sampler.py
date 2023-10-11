@@ -97,8 +97,8 @@ def main():
                 generation_config=generation_config,
                 return_dict_in_generate=True
             )
-        print(batch_output)
-        outputs_string = tokenizer.batch_decode(batch_output, skip_special_tokens=True)
+        print(batch_output.sequences)
+        outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
         print(outputs_string)
         # ans_ext = extract_answer(ans)
         # pred_ans.append(ans_ext)
