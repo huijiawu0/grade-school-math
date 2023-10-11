@@ -35,7 +35,7 @@ def extract_answer(completion):
 
 def main():
     global local_rank
-
+    th.set_warn_always(False)
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
@@ -62,7 +62,7 @@ def main():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
-        padding_side="left",
+        padding_side="right",
         use_fast=False,
     )
     tokenizer.pad_token = tokenizer.unk_token

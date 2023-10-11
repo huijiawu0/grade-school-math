@@ -52,7 +52,6 @@ def sample(model, qn, tokenizer, device, sample_len):
         with th.no_grad():
             toks = tokenizer([qn], padding=False, return_tensors="pt").to(device)
             orig_len = toks["input_ids"].shape[1]
-
             out = model.generate(
                 **toks, max_length=orig_len + 1, pad_token_id=model.config.eos_token_id
             )
