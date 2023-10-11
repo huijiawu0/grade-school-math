@@ -90,7 +90,7 @@ def main():
         input_ids = batch['input_ids'].to(model.device)
         attention_mask = batch["attention_mask"].to(model.device)
         with torch.no_grad():
-            batch_output = model.module.generate(
+            batch_output = model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 generation_config=generation_config,
