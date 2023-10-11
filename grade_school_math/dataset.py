@@ -47,10 +47,10 @@ class GSMDataset(th.utils.data.Dataset):
         self.q = [ex["question"] for ex in self.examples]
         self.qa = [ex["question"] + ex["answer"] for ex in self.examples]
         self.q_ids = tokenizer(self.q,
-                                      return_tensors="pt",
-                                      padding="max_length",
-                                      max_length=tokenizer.model_max_length,
-                                      truncation=True).input_ids
+                               return_tensors="pt",
+                               padding="max_length",
+                               max_length=tokenizer.model_max_length,
+                               truncation=True).input_ids
         self.input_ids = tokenizer(self.qa,
                                    return_tensors="pt",
                                    padding="max_length",
