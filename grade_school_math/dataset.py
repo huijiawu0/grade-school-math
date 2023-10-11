@@ -77,6 +77,6 @@ class GSMDataset(th.utils.data.Dataset):
                     attention_mask=self.attention_mask[idx],
                     labels=self.targets[idx],
                     examples=self.examples[idx],
-                    q_ids=self.question_ids[idx],
+                    q_ids=self.q_ids[idx],
                     q_attention_mask=self.q_attention_mask[idx])
         # return dict(input_ids=tokens, attention_mask=mask)
