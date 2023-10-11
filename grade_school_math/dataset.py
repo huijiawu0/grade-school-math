@@ -59,12 +59,15 @@ class GSMDataset(th.utils.data.Dataset):
                 for i in range(len(self.examples))
             ]
         )
-        print("input_ids: ", self.input_ids.shape)
+        print(f"input_ids: {self.input_ids.shape}, mask: {self.attention_mask.shape}, targets: {self.targets.shape}")
         print(f"1Max tokens: {self.max_len}")
     
     def __len__(self):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
+        try:
+            return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
+        except IndexError:
+            print(idx)
         # return dict(input_ids=tokens, attention_mask=mask)
