@@ -100,6 +100,7 @@ def main():
         print(batch_output.sequences)
         outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
         print(outputs_string)
+        print("batch: ", batch)
         for example, ans in zip(batch['examples'], outputs_string):
             print("example: ", example)
             ans_ext = extract_answer(ans)
