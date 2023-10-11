@@ -99,12 +99,11 @@ def main():
             )
         outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
         for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
-            pred_ans_ext = extract_answer(pred_ans)
-            gold_ans_ext = extract_answer(gold_ans)
-            pred_ans_list.append(pred_ans_ext)
-            gold_ans_list.append(gold_ans_ext)
-            print(pred_ans)
-            print(pred_ans_ext, gold_ans_ext)
+            pred_ext = extract_answer(pred_ans)
+            gold_ext = extract_answer(gold_ans)
+            pred_ans_list.append(pred_ext)
+            gold_ans_list.append(gold_ext)
+            print(pred_ext, gold_ext)
 
     print(pred_ans_list)
     print(gold_ans_list)
