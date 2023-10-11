@@ -76,11 +76,11 @@ def main():
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_loader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False, num_workers=4)
     generation_config = GenerationConfig(
-        temperature=0.7,
-        do_sample=True,
-        num_beams=1,
+        # temperature=0.7,
+        # do_sample=False,
+        # num_beams=1,
         max_new_tokens=256,
-        num_return_sequences=1,
+        # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
     pred_ans_list = []
