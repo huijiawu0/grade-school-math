@@ -71,9 +71,7 @@ def main():
     print("Loading model: ", model_args.model_name_or_path)
     device = torch.device("cuda")
     model.to(device)
-    print("Model Loaded")
-    
-    print("mode:", data_args.eval_data_path)
+    print("eval_data_path:", data_args.eval_data_path)
     eval_examples = get_examples(data_args.eval_data_path)
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_loader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False, num_workers=4)
@@ -88,12 +86,10 @@ def main():
     pred_ans_list = []
     gold_ans_list = []
     for batch in tqdm(eval_loader):
-        input_ids = batch['input_ids'].to(model.device)
-        attention_mask = batch["attention_mask"].to(model.device)
         with torch.no_grad():
             batch_output = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
+                input_ids=batch['q_ids'].to(model.device),
+                attention_mask=batch["q_attention_mask"].to(model.device),
                 generation_config=generation_config,
                 return_dict_in_generate=True
             )

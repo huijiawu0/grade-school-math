@@ -44,7 +44,13 @@ def is_correct(model_completion, gt_example):
 class GSMDataset(th.utils.data.Dataset):
     def __init__(self, tokenizer, examples, loss_on_prefix=True):
         self.examples = examples
+        self.q = [ex["question"] for ex in self.examples]
         self.qa = [ex["question"] + ex["answer"] for ex in self.examples]
+        self.q_ids = tokenizer(self.q,
+                                      return_tensors="pt",
+                                      padding="max_length",
+                                      max_length=tokenizer.model_max_length,
+                                      truncation=True).input_ids
         self.input_ids = tokenizer(self.qa,
                                    return_tensors="pt",
                                    padding="max_length",
@@ -53,6 +59,7 @@ class GSMDataset(th.utils.data.Dataset):
         self.loss_on_prefix = loss_on_prefix
         self.targets = self.input_ids.clone()
         self.attention_mask = self.input_ids.ne(tokenizer.pad_token_id)
+        self.q_attention_mask = self.q_ids.ne(tokenizer.pad_token_id)
         self.max_len = max(
             [
                 len(self.input_ids[i])
@@ -66,6 +73,10 @@ class GSMDataset(th.utils.data.Dataset):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx],
-                    examples=self.examples[idx])
+        return dict(input_ids=self.input_ids[idx],
+                    attention_mask=self.attention_mask[idx],
+                    labels=self.targets[idx],
+                    examples=self.examples[idx],
+                    q_ids=self.question_ids[idx],
+                    q_attention_mask=self.q_attention_mask[idx])
         # return dict(input_ids=tokens, attention_mask=mask)
