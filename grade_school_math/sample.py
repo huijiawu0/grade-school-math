@@ -62,7 +62,7 @@ def main():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
-        padding_side="right",
+        padding_side="left",
         use_fast=False,
     )
     tokenizer.pad_token = tokenizer.unk_token
