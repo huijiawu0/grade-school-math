@@ -105,8 +105,8 @@ def main():
             # print("GOLD: ", gold_ans)
             # print("PRED: ", pred_ans)
 
-    print(pred_ans_list)
-    print(gold_ans_list)
+    # print(pred_ans_list)
+    # print(gold_ans_list)
     
     cor = 0
     invalid = 0
