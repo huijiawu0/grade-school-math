@@ -46,16 +46,16 @@ class GSMDataset(th.utils.data.Dataset):
         self.examples = examples
         self.qns = [ex["question"] for ex in self.examples]
         self.ans = [ex["answer"] for ex in self.examples]
-        self.qns = tokenizer(self.qns,
-                             padding="max_length",
-                             max_length=tokenizer.model_max_length,
-                             truncation=True)
-        self.ans = tokenizer(self.ans,
-                             padding="max_length",
-                             max_length=tokenizer.model_max_length,
-                             truncation=True)
-        # self.qns = tokenizer(self.qns, padding=False)
-        # self.ans = tokenizer(self.ans, padding=False)
+        # self.qns = tokenizer(self.qns,
+        #                      padding="max_length",
+        #                      max_length=tokenizer.model_max_length,
+        #                      truncation=True)
+        # self.ans = tokenizer(self.ans,
+        #                      padding="max_length",
+        #                      max_length=tokenizer.model_max_length,
+        #                      truncation=True)
+        self.qns = tokenizer(self.qns, padding=False)
+        self.ans = tokenizer(self.ans, padding=False)
         self.loss_on_prefix = loss_on_prefix
         self.max_len = max(
             [
