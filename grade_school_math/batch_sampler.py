@@ -74,7 +74,7 @@ def main():
     print("Model Loaded")
     
     print("mode:", data_args.eval_data_path)
-    eval_examples = get_examples("test.jsonl")
+    eval_examples = get_examples(data_args.eval_data_path)
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_loader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False, num_workers=4)
     generation_config = GenerationConfig(
@@ -99,11 +99,13 @@ def main():
             )
         outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
         for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
-            pred_ext = extract_answer(pred_ans)
             gold_ext = extract_answer(gold_ans)
-            pred_ans_list.append(pred_ext)
+            pred_ext = extract_answer(pred_ans)
             gold_ans_list.append(gold_ext)
-            print(pred_ext, gold_ext)
+            pred_ans_list.append(pred_ext)
+            print(gold_ext, pred_ext)
+            print(gold_ans)
+            print(pred_ans)
 
     print(pred_ans_list)
     print(gold_ans_list)
