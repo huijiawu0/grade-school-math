@@ -85,8 +85,8 @@ def main():
         num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
-    pred_ans = []
-    gold_ans = []
+    pred_ans_list = []
+    gold_ans_list = []
     for batch in tqdm(eval_loader):
         input_ids = batch['input_ids'].to(model.device)
         attention_mask = batch["attention_mask"].to(model.device)
@@ -101,21 +101,21 @@ def main():
         for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
             pred_ans_ext = extract_answer(pred_ans)
             gold_ans_ext = extract_answer(gold_ans)
-            pred_ans.append(pred_ans_ext)
-            gold_ans.append(gold_ans_ext)
+            pred_ans_list.append(pred_ans_ext)
+            gold_ans_list.append(gold_ans_ext)
             print(pred_ans)
             print(pred_ans_ext, gold_ans_ext)
 
-    print(pred_ans)
-    print(gold_ans)
+    print(pred_ans_list)
+    print(gold_ans_list)
     
     cor = 0
     invalid = 0
-    rg = range(min(len(pred_ans), len(gold_ans)))
+    rg = range(min(len(pred_ans_list), len(gold_ans_list)))
     for i in rg:
-        if pred_ans[i] != INVALID_ANS and abs(float(pred_ans[i]) - float(gold_ans[i])) < 1e-4:
+        if pred_ans_list[i] != INVALID_ANS and abs(float(pred_ans_list[i]) - float(gold_ans_list[i])) < 1e-4:
             cor += 1
-        if pred_ans[i] == INVALID_ANS:
+        if pred_ans_list[i] == INVALID_ANS:
             invalid += 1
     print(cor, cor / len(list(rg)))
     print(len(rg), invalid)
