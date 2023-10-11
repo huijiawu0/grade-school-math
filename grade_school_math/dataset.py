@@ -52,22 +52,19 @@ class GSMDataset(th.utils.data.Dataset):
                                    truncation=True).input_ids
         self.loss_on_prefix = loss_on_prefix
         self.targets = self.input_ids.clone()
-        self.attention_mask = self.input_ids.ne(tokenizer.pad_token_id),
+        self.attention_mask = self.input_ids.ne(tokenizer.pad_token_id)
         self.max_len = max(
             [
                 len(self.input_ids[i])
                 for i in range(len(self.examples))
             ]
         )
-        print(f"input_ids: {self.input_ids.shape}, mask: {self.attention_mask}, targets: {self.targets.shape}")
+        print(f"input_ids: {self.input_ids.shape}, mask: {self.attention_mask.shape}, targets: {self.targets.shape}")
         print(f"1Max tokens: {self.max_len}")
     
     def __len__(self):
         return len(self.examples)
     
     def __getitem__(self, idx):
-        try:
-            return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
-        except IndexError:
-            print(idx)
+        return dict(input_ids=self.input_ids[idx], attention_mask=self.attention_mask[idx], labels=self.targets[idx])
         # return dict(input_ids=tokens, attention_mask=mask)
