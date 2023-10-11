@@ -1,4 +1,8 @@
+import math
+
 import torch as th
+import transformers
+
 from dataset import get_examples, GSMDataset
 from calculator import sample
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
@@ -6,6 +10,8 @@ import random
 import re
 from tqdm import tqdm
 import sys
+
+from grade_school_math.train_llama2 import ModelArguments, DataArguments, TrainingArguments
 
 ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
@@ -28,11 +34,44 @@ def extract_answer(completion):
 
 
 def main():
-    device = th.device("cuda")
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    global local_rank
+
+    parser = transformers.HfArgumentParser(
+        (ModelArguments, DataArguments, TrainingArguments)
+    )
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+    print(training_args)
+    local_rank = training_args.local_rank
+
+    # Set RoPE scaling factor
+    config = transformers.AutoConfig.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+    )
+    orig_ctx_len = getattr(config, "max_position_embeddings", None)
+    if orig_ctx_len and training_args.model_max_length > orig_ctx_len:
+        scaling_factor = float(math.ceil(training_args.model_max_length / orig_ctx_len))
+        config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+    config.use_cache = False
+
+    # Load model and tokenizer
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_args.model_name_or_path,
+        config=config,
+        cache_dir=training_args.cache_dir,
+    )
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+        model_max_length=training_args.model_max_length,
+        padding_side="right",
+        use_fast=False,
+    )
+    tokenizer.pad_token = tokenizer.unk_token
+
     model_name = sys.argv[1]
     print("Loading model: ", model_name)
-    model = GPT2LMHeadModel.from_pretrained(model_name)
+    device = th.device("cuda")
     model.to(device)
     print("Model Loaded")
     
