@@ -97,18 +97,14 @@ def main():
                 generation_config=generation_config,
                 return_dict_in_generate=True
             )
-        print(batch_output.sequences)
         outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
-        print(outputs_string)
-        print("batch: ", batch)
-        for example, ans in zip(batch['examples'], outputs_string):
-            print("example: ", example)
-            ans_ext = extract_answer(ans)
-            pred_ans.append(ans_ext)
-            gans = extract_answer(example['answer'])
-            gold_ans.append(gans)
-            print(ans)
-            print(ans_ext, gans)
+        for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
+            pred_ans_ext = extract_answer(pred_ans)
+            gold_ans_ext = extract_answer(gold_ans)
+            pred_ans.append(pred_ans_ext)
+            gold_ans.append(gold_ans_ext)
+            print(pred_ans)
+            print(pred_ans_ext, gold_ans_ext)
 
     print(pred_ans)
     print(gold_ans)
