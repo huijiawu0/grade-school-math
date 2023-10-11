@@ -83,6 +83,7 @@ def main():
         num_beams=1,
         max_new_tokens=256,
         num_return_sequences=1,
+        pad_token_id=tokenizer.eos_token_id
     )
     pred_ans = []
     gold_ans = []
