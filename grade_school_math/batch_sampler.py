@@ -101,6 +101,7 @@ def main():
         outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
         print(outputs_string)
         for example, ans in zip(batch['examples'], outputs_string):
+            print("example: ", example)
             ans_ext = extract_answer(ans)
             pred_ans.append(ans_ext)
             gans = extract_answer(example['answer'])
