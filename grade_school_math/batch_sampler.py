@@ -100,8 +100,8 @@ def main():
             gold_ans_list.append(gold_ext)
             pred_ans_list.append(pred_ext)
             print(gold_ext, pred_ext)
-            print("GOLD: ", gold_ans)
-            print("PRED: ", pred_ans)
+            # print("GOLD: ", gold_ans)
+            # print("PRED: ", pred_ans)
 
     print(pred_ans_list)
     print(gold_ans_list)
