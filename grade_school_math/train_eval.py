@@ -105,6 +105,7 @@ class EvaluationAccuracyCallback(TrainerCallback):
     def __init__(self, model, tokenizer, eval_dataloader, generation_config=None):
         self.model = model
         self.tokenizer = tokenizer
+        self.tokenizer.padding_side = "left"
         self.generation_config = generation_config or GenerationConfig(
             max_new_tokens=256,
             pad_token_id=tokenizer.eos_token_id
