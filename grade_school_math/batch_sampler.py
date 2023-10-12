@@ -1,5 +1,5 @@
 import math
-
+import ray
 import torch
 import transformers
 from torch.utils.data import DataLoader
@@ -34,6 +34,25 @@ def extract_answer(completion):
         return INVALID_ANS
 
 
+@ray.remote(num_gpus=1)
+def parallel_decode(model, tokenizer, batch, generation_config):
+    model.eval()
+    with torch.no_grad():
+        batch_output = model.generate(
+            input_ids=batch['q_ids'].cuda(),
+            attention_mask=batch["q_attention_mask"].cuda(),
+            generation_config=generation_config,
+            return_dict_in_generate=True
+        )
+    outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
+    results = []
+    for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
+        gold_ext = extract_answer(gold_ans)
+        pred_ext = extract_answer(pred_ans)
+        results.append((gold_ext, pred_ext))
+    return results
+
+
 def main():
     global local_rank
     torch.set_warn_always(False)
@@ -43,7 +62,6 @@ def main():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     local_rank = training_args.local_rank
 
-    # Set RoPE scaling factor
     config = transformers.AutoConfig.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -77,6 +95,13 @@ def main():
     eval_examples = get_examples(data_args.eval_data_path)
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_loader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False, num_workers=4)
+    
+    ray.init()
+    # Divide the eval_loader into chunks based on the number of GPUs
+    num_gpus = torch.cuda.device_count()
+    eval_loader_chunks = list(eval_loader)
+    eval_loader_chunks = [eval_loader_chunks[i::num_gpus] for i in range(num_gpus)]
+
     generation_config = GenerationConfig(
         # temperature=0.7,
         # do_sample=False,
@@ -85,28 +110,18 @@ def main():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
-    pred_ans_list = []
-    gold_ans_list = []
-    for batch in tqdm(eval_loader):
-        with torch.no_grad():
-            batch_output = model.generate(
-                input_ids=batch['q_ids'].to(model.device),
-                attention_mask=batch["q_attention_mask"].to(model.device),
-                generation_config=generation_config,
-                return_dict_in_generate=True
-            )
-        outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
-        for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
-            gold_ext = extract_answer(gold_ans)
-            pred_ext = extract_answer(pred_ans)
-            gold_ans_list.append(gold_ext)
-            pred_ans_list.append(pred_ext)
-            # print(gold_ext, pred_ext)
-            # print("GOLD: ", gold_ans)
-            # print("PRED: ", pred_ans)
+    results = [parallel_decode.remote(model, tokenizer, chunk, generation_config) for chunk in
+               eval_loader_chunks]
 
-    # print(pred_ans_list)
-    # print(gold_ans_list)
+    # Gather results
+    results = ray.get(results)
+    all_results = [item for sublist in results for item in sublist]  # Flatten the results
+
+    pred_ans_list = [res[1] for res in all_results]
+    gold_ans_list = [res[0] for res in all_results]
+    
+    print(pred_ans_list)
+    print(gold_ans_list)
     
     cor = 0
     invalid = 0
