@@ -44,15 +44,16 @@ def parallel_decode(model_path, tokenizer, batch, generation_config):
     
     with torch.no_grad():
         batch_output = model.generate(
-            input_ids=batch['q_ids'].cuda(),
-            attention_mask=batch["q_attention_mask"].cuda(),
+            input_ids=[b['q_ids'].cuda() for b in batch],
+            attention_mask=[b["q_attention_mask"].cuda() for b in batch],
             generation_config=generation_config,
             return_dict_in_generate=True
         )
 
     outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
     results = []
-    for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
+    for gold_ans1, pred_ans in zip(batch, outputs_string):
+        gold_ans = gold_ans1["example"]["answer"]
         gold_ext = extract_answer(gold_ans)
         pred_ext = extract_answer(pred_ans)
         results.append((gold_ext, pred_ext))
@@ -117,7 +118,6 @@ def main():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
-    print(eval_loader_chunks)
     results = [parallel_decode.remote(model_args.model_name_or_path, tokenizer, chunk, generation_config) for chunk in
                eval_loader_chunks]
 
