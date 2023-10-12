@@ -36,9 +36,9 @@ def extract_answer(completion):
 
 @ray.remote(num_gpus=1)
 def parallel_decode(model_path, tokenizer, batch, generation_config):
-    gpu_id = ray.get_gpu_ids()[0]
-    print(gpu_id)
-    device = torch.device(f"cuda:{gpu_id}")
+    # gpu_id = ray.get_gpu_ids()[0]
+    # print(gpu_id)
+    device = torch.device("cuda")
     model = transformers.AutoModelForCausalLM.from_pretrained(model_path).to(device)
     model.eval()
     
