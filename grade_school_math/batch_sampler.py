@@ -35,8 +35,13 @@ def extract_answer(completion):
 
 
 @ray.remote(num_gpus=1)
-def parallel_decode(model, tokenizer, batch, generation_config):
+def parallel_decode(model_path, tokenizer, batch, generation_config):
+    gpu_id = ray.get_gpu_ids()[0]
+    
+    device = torch.device(f"cuda:{gpu_id}")
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_path).to(device)
     model.eval()
+    
     with torch.no_grad():
         batch_output = model.generate(
             input_ids=batch['q_ids'].cuda(),
@@ -44,6 +49,7 @@ def parallel_decode(model, tokenizer, batch, generation_config):
             generation_config=generation_config,
             return_dict_in_generate=True
         )
+
     outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
     results = []
     for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
@@ -73,12 +79,12 @@ def main():
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
     config.use_cache = False
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        config=config,
-        cache_dir=training_args.cache_dir,
-    )
-    
+    # model = transformers.AutoModelForCausalLM.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     config=config,
+    #     cache_dir=training_args.cache_dir,
+    # )
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -111,7 +117,7 @@ def main():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
-    results = [parallel_decode.remote(model, tokenizer, chunk, generation_config) for chunk in
+    results = [parallel_decode.remote(model_args.model_name_or_path, tokenizer, chunk, generation_config) for chunk in
                eval_loader_chunks]
 
     # Gather results
