@@ -120,13 +120,14 @@ class EvaluationAccuracyCallback(TrainerCallback):
                     return_dict_in_generate=True
                 )
             outputs_string = self.tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
-            for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
+            for idx, (gold_ans, pred_ans) in enumerate(zip(batch['examples']["answer"], outputs_string)):
                 gold_ext = extract_answer(gold_ans)
                 pred_ext = extract_answer(pred_ans)
                 gold_ans_list.append(gold_ext)
                 pred_ans_list.append(pred_ext)
-                # print("GOLD: ", gold_ans)
-                # print("PRED: ", pred_ans)
+                if idx == 0:
+                    print("GOLD: ", gold_ans)
+                    print("PRED: ", pred_ans)
                 
         cor = 0
         invalid = 0
