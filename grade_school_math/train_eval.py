@@ -102,14 +102,9 @@ from transformers import TrainerCallback
 
 
 class EvaluationAccuracyCallback(TrainerCallback):
-    def __init__(self, model, tokenizer, eval_dataloader, generation_config=None):
+    def __init__(self, model, eval_dataloader, generation_config=None):
         self.model = model
-        self.tokenizer = tokenizer
-        self.tokenizer.padding_side = "left"
-        self.generation_config = generation_config or GenerationConfig(
-            max_new_tokens=256,
-            pad_token_id=tokenizer.eos_token_id
-        )
+        self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
     
     def on_evaluate(self, args, state, control, **kwargs):
@@ -163,7 +158,6 @@ def train():
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
     config.use_cache = False
     
-    # Load model and tokenizer
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         config=config,
@@ -177,23 +171,38 @@ def train():
         use_fast=False,
     )
     tokenizer.pad_token = tokenizer.unk_token
-    
+    eval_tokenizer = transformers.AutoTokenizer.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=training_args.cache_dir,
+        model_max_length=training_args.model_max_length,
+        padding_side="left",
+        use_fast=False,
+    )
+    eval_tokenizer.pad_token = eval_tokenizer.unk_token
     start_time = time.time()
     train_examples = get_examples(data_args.data_path)
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_examples = get_examples("test.jsonl")
-    eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
+    eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_dataloader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False,
                                  num_workers=4)
     end_time = time.time()
     print(f"Data loading took {(end_time - start_time):.2f} seconds.")
     data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
+    generation_config = GenerationConfig(
+        # temperature=0.7,
+        # do_sample=False,
+        # num_beams=1,
+        max_new_tokens=256,
+        # num_return_sequences=1,
+        pad_token_id=tokenizer.eos_token_id
+    )
     trainer = Trainer(
         model=model,
         tokenizer=tokenizer,
         args=training_args,
         **data_module,
-        callbacks=[EvaluationAccuracyCallback(model, tokenizer, eval_dataloader)]
+        callbacks=[EvaluationAccuracyCallback(model, eval_dataloader, generation_config)]
     )
     
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
