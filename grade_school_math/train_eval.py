@@ -102,8 +102,9 @@ from transformers import TrainerCallback
 
 
 class EvaluationAccuracyCallback(TrainerCallback):
-    def __init__(self, model, eval_dataloader, generation_config=None):
+    def __init__(self, model, tokenizer, eval_dataloader, generation_config=None):
         self.model = model
+        self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
     
@@ -202,7 +203,7 @@ def train():
         tokenizer=tokenizer,
         args=training_args,
         **data_module,
-        callbacks=[EvaluationAccuracyCallback(model, eval_dataloader, generation_config)]
+        callbacks=[EvaluationAccuracyCallback(model, eval_tokenizer, eval_dataloader, generation_config)]
     )
     
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
