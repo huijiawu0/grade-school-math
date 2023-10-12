@@ -125,8 +125,8 @@ class EvaluationAccuracyCallback(TrainerCallback):
                 pred_ext = extract_answer(pred_ans)
                 gold_ans_list.append(gold_ext)
                 pred_ans_list.append(pred_ext)
-                print("GOLD: ", gold_ans)
-                print("PRED: ", pred_ans)
+                # print("GOLD: ", gold_ans)
+                # print("PRED: ", pred_ans)
                 
         cor = 0
         invalid = 0
