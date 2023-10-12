@@ -23,6 +23,7 @@ import ray
 
 import torch
 import transformers
+from accelerate import Accelerator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import Trainer, GenerationConfig
@@ -104,7 +105,8 @@ from transformers import TrainerCallback
 
 class EvaluationAccuracyCallback(TrainerCallback):
     def __init__(self, model, tokenizer, eval_dataloader, generation_config=None, num_gpus=1):
-        self.model = model
+        # self.model = model
+        self.model = Accelerator.unwrap_model(model)
         self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
