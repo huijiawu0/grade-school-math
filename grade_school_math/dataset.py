@@ -66,8 +66,8 @@ class GSMDataset(th.utils.data.Dataset):
                 for i in range(len(self.examples))
             ]
         )
-        print(f"input_ids: {self.input_ids.shape}, mask: {self.attention_mask.shape}, targets: {self.targets.shape}")
-        print(f"1Max tokens: {self.max_len}")
+        # print(f"input_ids: {self.input_ids.shape}, mask: {self.attention_mask.shape}, targets: {self.targets.shape}")
+        # print(f"Max tokens: {self.max_len}")
     
     def __len__(self):
         return len(self.examples)
