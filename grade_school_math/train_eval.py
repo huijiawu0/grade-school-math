@@ -204,7 +204,7 @@ def train():
         tokenizer=tokenizer,
         args=training_args,
         **data_module,
-        callbacks=[EvaluationAccuracyCallback(model, eval_tokenizer, eval_dataloader, generation_config)]
+        callbacks=[EvaluationAccuracyCallback(model, tokenizer, eval_dataloader, generation_config)]
     )
     
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
