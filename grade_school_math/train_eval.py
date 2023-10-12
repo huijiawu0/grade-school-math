@@ -106,7 +106,8 @@ from transformers import TrainerCallback
 class EvaluationAccuracyCallback(TrainerCallback):
     def __init__(self, model, tokenizer, eval_dataloader, generation_config=None, num_gpus=1):
         # self.model = model
-        self.model = Accelerator.unwrap_model(model)
+        accelerator = Accelerator()
+        self.model = accelerator.unwrap_model(model)
         self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
