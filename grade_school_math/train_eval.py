@@ -19,6 +19,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from typing import Optional
+import ray
 
 import torch
 import transformers
@@ -102,33 +103,29 @@ from transformers import TrainerCallback
 
 
 class EvaluationAccuracyCallback(TrainerCallback):
-    def __init__(self, model, tokenizer, eval_dataloader, generation_config=None):
+    def __init__(self, model, tokenizer, eval_dataloader, generation_config=None, num_gpus=1):
         self.model = model
         self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
+        self.num_gpus = num_gpus
     
     def on_evaluate(self, args, state, control, **kwargs):
-        pred_ans_list = []
+        ray.init(ignore_reinit_error=True)
+        chunks = list(self.eval_dataloader)
+        chunks = [chunks[i::self.num_gpus] for i in range(self.num_gpus)]
+        
+        results = []
+        for chunk in chunks:
+            results.append(evaluate_on_gpu.remote(self.model, self.tokenizer, chunk, self.generation_config))
+        
         gold_ans_list = []
-        for batch in tqdm(self.eval_dataloader):
-            with torch.no_grad():
-                batch_output = self.model.generate(
-                    input_ids=batch['q_ids'].to(self.model.device),
-                    attention_mask=batch["q_attention_mask"].to(self.model.device),
-                    generation_config=self.generation_config,
-                    return_dict_in_generate=True
-                )
-            outputs_string = self.tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
-            for idx, (gold_ans, pred_ans) in enumerate(zip(batch['examples']["answer"], outputs_string)):
-                gold_ext = extract_answer(gold_ans)
-                pred_ext = extract_answer(pred_ans)
-                gold_ans_list.append(gold_ext)
-                pred_ans_list.append(pred_ext)
-                if idx == 0:
-                    print("GOLD: ", gold_ans)
-                    print("PRED: ", pred_ans)
-                
+        pred_ans_list = []
+        for result in ray.get(results):
+            gold_ans_chunk, pred_ans_chunk = result
+            gold_ans_list.extend(gold_ans_chunk)
+            pred_ans_list.extend(pred_ans_chunk)
+
         cor = 0
         invalid = 0
         rg = range(min(len(pred_ans_list), len(gold_ans_list)))
@@ -139,6 +136,28 @@ class EvaluationAccuracyCallback(TrainerCallback):
                 invalid += 1
         print(cor, cor / len(list(rg)))
         print(len(rg), invalid)
+        
+        ray.shutdown()
+
+
+@ray.remote(num_gpus=1)
+def evaluate_on_gpu(model, tokenizer, batch, generation_config):
+    with torch.no_grad():
+        batch_output = model.generate(
+            input_ids=batch['q_ids'].cuda(),
+            attention_mask=batch["q_attention_mask"].cuda(),
+            generation_config=generation_config,
+            return_dict_in_generate=True
+        )
+    outputs_string = tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
+    gold_ans_list = []
+    pred_ans_list = []
+    for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
+        gold_ext = extract_answer(gold_ans)
+        pred_ext = extract_answer(pred_ans)
+        gold_ans_list.append(gold_ext)
+        pred_ans_list.append(pred_ext)
+    return gold_ans_list, pred_ans_list
 
 
 def train():
