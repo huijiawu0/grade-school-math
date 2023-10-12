@@ -95,8 +95,8 @@ def main():
     tokenizer.pad_token = tokenizer.unk_token
 
     print("loading model: ", model_args.model_name_or_path)
-    device = torch.device("cuda")
-    model.to(device)
+    # device = torch.device("cuda")
+    # model.to(device)
     print("eval_data_path:", data_args.eval_data_path)
     eval_examples = get_examples(data_args.eval_data_path)
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
