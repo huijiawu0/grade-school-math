@@ -98,7 +98,7 @@ def main():
     
     ray.init()
     # Divide the eval_loader into chunks based on the number of GPUs
-    num_gpus = torch.cuda.device_count()
+    num_gpus = 4
     print("num_gpus: ", num_gpus)
     eval_loader_chunks = list(eval_loader)
     eval_loader_chunks = [eval_loader_chunks[i::num_gpus] for i in range(num_gpus)]
