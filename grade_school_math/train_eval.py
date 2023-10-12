@@ -220,12 +220,13 @@ def train():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
+    accelerate = Accelerator()
     trainer = Trainer(
         model=model,
         tokenizer=tokenizer,
         args=training_args,
         **data_module,
-        callbacks=[EvaluationAccuracyCallback(model, eval_tokenizer, eval_dataloader, generation_config, num_gpus=torch.cuda.device_count())]
+        callbacks=[EvaluationAccuracyCallback(accelerate.unwrap_model(model), eval_tokenizer, eval_dataloader, generation_config, num_gpus=torch.cuda.device_count())]
     )
     
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
