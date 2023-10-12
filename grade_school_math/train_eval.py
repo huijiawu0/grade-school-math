@@ -111,7 +111,7 @@ class EvaluationAccuracyCallback(TrainerCallback):
         )
         self.eval_dataloader = eval_dataloader
     
-    def on_evaluate(self, **kwargs):
+    def on_evaluate(self, args, state, control, **kwargs):
         pred_ans_list = []
         gold_ans_list = []
         for batch in tqdm(self.eval_dataloader):
