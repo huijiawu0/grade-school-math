@@ -117,6 +117,7 @@ def main():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
+    print(eval_loader_chunks)
     results = [parallel_decode.remote(model_args.model_name_or_path, tokenizer, chunk, generation_config) for chunk in
                eval_loader_chunks]
 
