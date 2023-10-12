@@ -185,7 +185,7 @@ def train():
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
     # eval_examples = get_examples("test.jsonl")
     eval_examples = get_examples(data_args.data_path)[:100]
-    eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
+    eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_dataloader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False,
                                  num_workers=4)
     end_time = time.time()
