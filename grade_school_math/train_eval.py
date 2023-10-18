@@ -202,8 +202,8 @@ def train():
     start_time = time.time()
     train_examples = get_examples(data_args.data_path)
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
-    eval_examples = get_examples("test.jsonl")
-    # eval_examples = get_examples(data_args.data_path)[:100]
+    # eval_examples = get_examples("test.jsonl")
+    eval_examples = get_examples(data_args.data_path)[:100]
     eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     eval_dataloader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False,
                                  num_workers=4)
@@ -218,13 +218,12 @@ def train():
         # num_return_sequences=1,
         pad_token_id=tokenizer.eos_token_id
     )
-    accelerate = Accelerator()
     trainer = Trainer(
         model=model,
         tokenizer=tokenizer,
         args=training_args,
         **data_module,
-        callbacks=[EvaluationAccuracyCallback(accelerate.unwrap_model(model), eval_tokenizer, eval_dataloader, generation_config, num_gpus=torch.cuda.device_count())]
+        callbacks=[EvaluationAccuracyCallback(model, eval_tokenizer, eval_dataloader, generation_config)]
     )
     
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
