@@ -42,7 +42,7 @@ def is_correct(model_completion, gt_example):
 
 
 class GSMDataset(th.utils.data.Dataset):
-    def __init__(self, tokenizer, examples, loss_on_prefix=True):
+    def __init__(self, tokenizer, examples, loss_on_prefix=True, cross_entropy=True):
         self.examples = examples
         self.q = [ex["question"] for ex in self.examples]
         self.qa = [ex["question"] + ex["answer"] for ex in self.examples]
@@ -57,7 +57,10 @@ class GSMDataset(th.utils.data.Dataset):
                                    max_length=tokenizer.model_max_length,
                                    truncation=True).input_ids
         self.loss_on_prefix = loss_on_prefix
-        self.targets = self.input_ids.clone()
+        if cross_entropy:
+            self.targets = [ex["target"] for ex in self.examples]
+        else:
+            self.targets = self.input_ids.clone()
         self.attention_mask = self.input_ids.ne(tokenizer.pad_token_id)
         self.q_attention_mask = self.q_ids.ne(tokenizer.pad_token_id)
         self.max_len = max(

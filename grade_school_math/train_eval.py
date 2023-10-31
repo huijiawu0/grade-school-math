@@ -25,7 +25,7 @@ import transformers
 from accelerate import Accelerator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import Trainer, GenerationConfig
+from transformers import Trainer, GenerationConfig, AutoConfig
 from transformers.trainer_pt_utils import LabelSmoother
 
 from dataset import get_examples, GSMDataset
@@ -140,6 +140,7 @@ class EvaluationAccuracyCallback(TrainerCallback):
         print(cor, cor / len(list(rg)))
         print(len(rg), invalid)
 
+
 def evaluate_on_gpu(model, tokenizer, batch, generation_config):
     with torch.no_grad():
         batch_output = model.generate(
@@ -178,11 +179,14 @@ def train():
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
     config.use_cache = False
     
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        config=config,
-        cache_dir=training_args.cache_dir,
-    )
+    # model = transformers.AutoModelForCausalLM.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     config=config,
+    #     cache_dir=training_args.cache_dir,
+    # )
+    config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path)
+    model = transformers.AutoModelForCausalLM.from_config(config)
+    model.init_weights()
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,

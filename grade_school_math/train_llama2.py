@@ -106,7 +106,6 @@ def train():
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
     config.use_cache = False
 
-    # Load model and tokenizer
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         config=config,
@@ -122,19 +121,14 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
 
     start_time = time.time()
-
     train_examples = get_examples(data_args.data_path)
     train_dset = GSMDataset(tokenizer, train_examples, loss_on_prefix=data_args.loss_on_prefix)
-
     eval_examples = get_examples("test.jsonl")
     eval_dset = GSMDataset(tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
-
     end_time = time.time()
     print(f"Data loading took {(end_time - start_time):.2f} seconds.")
-    
-    data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
 
-    # Start trainner
+    data_module = dict(train_dataset=train_dset, eval_dataset=eval_dset)
     trainer = Trainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
@@ -142,11 +136,8 @@ def train():
         trainer.train(resume_from_checkpoint=True)
     else:
         trainer.train()
-
-    # Save model
     model.config.use_cache = True
     trainer.save_state()
-    # trainer_save_model_safe(trainer)
     trainer.save_model()
 
 if __name__ == "__main__":
