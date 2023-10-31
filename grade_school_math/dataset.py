@@ -42,7 +42,7 @@ def is_correct(model_completion, gt_example):
 
 
 class GSMDataset(th.utils.data.Dataset):
-    def __init__(self, tokenizer, examples, loss_on_prefix=True, cross_entropy=True):
+    def __init__(self, tokenizer, examples, loss_on_prefix=True, cross_entropy=False):
         self.examples = examples
         self.q = [ex["question"] for ex in self.examples]
         self.qa = [ex["question"] + ex["answer"] for ex in self.examples]
