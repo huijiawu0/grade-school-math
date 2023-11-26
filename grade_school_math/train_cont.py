@@ -19,8 +19,6 @@ import re
 import time
 from dataclasses import dataclass, field
 from typing import Optional
-import torch._dynamo
-torch._dynamo.config.suppress_errors = True
 
 import torch
 import transformers
@@ -105,12 +103,14 @@ from transformers import TrainerCallback
 
 
 class EvaluationAccuracyCallback(TrainerCallback):
-    def __init__(self, model, tokenizer, eval_dataloader, generation_config=None):
+    def __init__(self, model, tokenizer, eval_dataloader, train_dataloader, generation_config=None):
         self.model = model
         self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
-    
+        self.correct_examples = []  # 新增：保存正确预测的例子
+        self.train_dataloader = train_dataloader  # 新增：引用训练数据加载器
+
     def on_evaluate(self, args, state, control, **kwargs):
         pred_ans_list = []
         gold_ans_list = []
@@ -128,15 +128,14 @@ class EvaluationAccuracyCallback(TrainerCallback):
                 pred_ext = extract_answer(pred_ans)
                 gold_ans_list.append(gold_ext)
                 pred_ans_list.append(pred_ext)
-                # print("GOLD: ", gold_ans)
-                # print("PRED: ", pred_ans)
-        
+
         cor = 0
         invalid = 0
         rg = range(min(len(pred_ans_list), len(gold_ans_list)))
         for i in rg:
             if pred_ans_list[i] != INVALID_ANS and abs(float(pred_ans_list[i]) - float(gold_ans_list[i])) < 1e-4:
                 cor += 1
+                self.correct_examples.append(batch['examples'][i])  # 将正确预测的例子添加到列表中
             if pred_ans_list[i] == INVALID_ANS:
                 invalid += 1
         print(cor, cor / len(list(rg)))
@@ -211,7 +210,9 @@ def train():
     # eval_examples = get_examples("test.jsonl")
     eval_examples = get_examples("test.jsonl")[:200]
     eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
-    eval_dataloader = DataLoader(eval_dset, batch_size=training_args.per_device_eval_batch_size, shuffle=False,
+    eval_dataloader = DataLoader(eval_dset,
+                                 batch_size=training_args.per_device_eval_batch_size,
+                                 shuffle=False,
                                  num_workers=4)
     end_time = time.time()
     print(f"Data loading took {(end_time - start_time):.2f} seconds.")
