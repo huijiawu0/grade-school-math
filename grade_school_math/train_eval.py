@@ -21,7 +21,9 @@ from dataclasses import dataclass, field
 from typing import Optional
 import torch._dynamo
 # torch._dynamo.config.suppress_errors = True
-torch._dynamo.config.automatic_dynamic_shapes = True
+print("torch._dynamo.config.automatic_dynamic_shapes", torch._dynamo.config.automatic_dynamic_shapes)
+torch._dynamo.config.automatic_dynamic_shapes = False
+print("torch._dynamo.config.automatic_dynamic_shapes", torch._dynamo.config.automatic_dynamic_shapes)
 import torch
 import transformers
 from accelerate import Accelerator
