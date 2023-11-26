@@ -245,6 +245,8 @@ def train():
         # temperature=0.7,
         # do_sample=False,
         # num_beams=1,
+        do_sample=True,
+        temperature=0.7,
         max_new_tokens=256,
         num_return_sequences=10,
         pad_token_id=tokenizer.eos_token_id
