@@ -102,18 +102,38 @@ def trainer_save_model_safe(trainer: transformers.Trainer):
 from transformers import TrainerCallback
 
 
+def is_correct_answer(pred_ans, gold_ans):
+    gold_ext = extract_answer(gold_ans)
+    pred_ext = extract_answer(pred_ans)
+    return pred_ext != INVALID_ANS and abs(float(pred_ext) - float(gold_ext)) < 1e-4
+
+
 class EvaluationAccuracyCallback(TrainerCallback):
     def __init__(self, model, tokenizer, eval_dataloader, train_dataloader, generation_config=None):
         self.model = model
         self.tokenizer = tokenizer
         self.generation_config = generation_config
         self.eval_dataloader = eval_dataloader
-        self.correct_examples = []  # 新增：保存正确预测的例子
-        self.train_dataloader = train_dataloader  # 新增：引用训练数据加载器
-
+        self.new_examples = []  # 新增：用于存储新生成的正确样本
+        self.train_dataloader = train_dataloader
+        
     def on_evaluate(self, args, state, control, **kwargs):
         pred_ans_list = []
         gold_ans_list = []
+
+        for example in tqdm(self.train_dataloader.dataset.examples, desc="Generating samples"):
+            input_ids = self.tokenizer(example['question'], return_tensors='pt').input_ids.to(self.model.device)
+            generated_outputs = self.model.generate(
+                input_ids=input_ids,
+                num_return_sequences=5,  # 生成5个答案
+                max_length=50,  # 或者其他适当的长度限制
+                do_sample=True
+            )
+            for output in generated_outputs:
+                generated_text = self.tokenizer.decode(output, skip_special_tokens=True)
+                if is_correct_answer(generated_text, example['answer']):
+                    self.new_examples.append({'question': example['question'], 'answer': generated_text})
+
         for batch in tqdm(self.eval_dataloader):
             with torch.no_grad():
                 batch_output = self.model.generate(
@@ -128,17 +148,18 @@ class EvaluationAccuracyCallback(TrainerCallback):
                 pred_ext = extract_answer(pred_ans)
                 gold_ans_list.append(gold_ext)
                 pred_ans_list.append(pred_ext)
-
+                print("GOLD: ", gold_ans)
+                print("PRED: ", pred_ans)
+        
         cor = 0
         invalid = 0
         rg = range(min(len(pred_ans_list), len(gold_ans_list)))
         for i in rg:
             if pred_ans_list[i] != INVALID_ANS and abs(float(pred_ans_list[i]) - float(gold_ans_list[i])) < 1e-4:
                 cor += 1
-                self.correct_examples.append(batch['examples'][i])  # 将正确预测的例子添加到列表中
             if pred_ans_list[i] == INVALID_ANS:
                 invalid += 1
-        print(cor, cor / len(list(rg)))
+        print("corr: %d, total: %d, acc: %.4f" % (cor, len(rg), cor / len(list(rg))))
         print(len(rg), invalid)
 
 
@@ -210,6 +231,9 @@ def train():
     # eval_examples = get_examples("test.jsonl")
     eval_examples = get_examples("test.jsonl")[:200]
     eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
+    train_dataloader = DataLoader(train_dset,
+                                  batch_size=training_args.per_device_train_batch_size,
+                                  shuffle=True)
     eval_dataloader = DataLoader(eval_dset,
                                  batch_size=training_args.per_device_eval_batch_size,
                                  shuffle=False,
@@ -222,22 +246,32 @@ def train():
         # do_sample=False,
         # num_beams=1,
         max_new_tokens=256,
-        # num_return_sequences=1,
+        num_return_sequences=10,
         pad_token_id=tokenizer.eos_token_id
     )
-    trainer = Trainer(
-        model=model,
-        tokenizer=tokenizer,
-        args=training_args,
-        **data_module,
-        callbacks=[EvaluationAccuracyCallback(model, eval_tokenizer, eval_dataloader, generation_config)]
-    )
-    
-    if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
-        trainer.train(resume_from_checkpoint=True)
-    else:
-        trainer.train()
-    
+    num_iterations = 10
+    for iteration in range(num_iterations):
+        eval_callback = EvaluationAccuracyCallback(model,
+                                                   eval_tokenizer,
+                                                   eval_dataloader,
+                                                   train_dataloader,
+                                                   generation_config)
+        trainer = Trainer(
+            model=model,
+            tokenizer=tokenizer,
+            args=training_args,
+            **data_module,
+            callbacks=[eval_callback]
+        )
+
+        if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
+            trainer.train(resume_from_checkpoint=True)
+        else:
+            trainer.train()
+
+        updated_examples = train_dset.examples + eval_callback.new_examples
+        train_dset = GSMDataset(tokenizer, updated_examples, loss_on_prefix=data_args.loss_on_prefix)
+
     # Save model
     model.config.use_cache = True
     trainer.save_state()
