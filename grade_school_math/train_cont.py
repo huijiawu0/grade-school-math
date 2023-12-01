@@ -232,7 +232,7 @@ def train():
     eval_examples = get_examples("test.jsonl")[:200]
     eval_dset = GSMDataset(eval_tokenizer, eval_examples, loss_on_prefix=data_args.loss_on_prefix)
     train_dataloader = DataLoader(train_dset,
-                                  batch_size=training_args.per_device_train_batch_size,
+                                  batch_size=training_args.per_device_eval_batch_size,
                                   shuffle=True)
     eval_dataloader = DataLoader(eval_dset,
                                  batch_size=training_args.per_device_eval_batch_size,
@@ -253,26 +253,22 @@ def train():
     )
     num_iterations = 10
     for iteration in range(num_iterations):
+        print("iteration: ", iteration)
         eval_callback = EvaluationAccuracyCallback(model,
                                                    eval_tokenizer,
                                                    eval_dataloader,
                                                    train_dataloader,
                                                    generation_config)
-        trainer = Trainer(
-            model=model,
-            tokenizer=tokenizer,
-            args=training_args,
-            **data_module,
-            callbacks=[eval_callback]
-        )
+        print("new_examples: ", len(eval_callback.new_examples))
+        updated_examples = train_dset.examples + eval_callback.new_examples
+        train_dset = GSMDataset(tokenizer, updated_examples, loss_on_prefix=data_args.loss_on_prefix)
+        data_module['train_dataset'] = train_dset
 
+        trainer = Trainer(model=model, tokenizer=tokenizer, args=training_args, **data_module, callbacks=[eval_callback])
         if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
             trainer.train(resume_from_checkpoint=True)
         else:
             trainer.train()
-
-        updated_examples = train_dset.examples + eval_callback.new_examples
-        train_dset = GSMDataset(tokenizer, updated_examples, loss_on_prefix=data_args.loss_on_prefix)
 
     # Save model
     model.config.use_cache = True
