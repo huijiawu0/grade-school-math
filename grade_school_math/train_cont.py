@@ -121,14 +121,17 @@ class EvaluationAccuracyCallback(TrainerCallback):
         pred_ans_list = []
         gold_ans_list = []
 
-        for example in tqdm(self.train_dataloader.dataset.examples, desc="Generating samples"):
-            input_ids = self.tokenizer(example['question'], return_tensors='pt').input_ids.to(self.model.device)
-            generated_outputs = self.model.generate(
-                input_ids=input_ids,
-                num_return_sequences=5,  # 生成5个答案
-                max_length=50,  # 或者其他适当的长度限制
-                do_sample=True
-            )
+        for batch in tqdm(self.train_dataloader):
+            with torch.no_grad():
+                batch_output = self.model.generate(
+                    input_ids=batch['q_ids'].to(self.model.device),
+                    attention_mask=batch["q_attention_mask"].to(self.model.device),
+                    num_return_sequences=5,
+                    generation_config=self.generation_config,
+                    do_sample=True,
+                    return_dict_in_generate=True
+                )
+            outputs_string = self.tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
             for output in generated_outputs:
                 generated_text = self.tokenizer.decode(output, skip_special_tokens=True)
                 if is_correct_answer(generated_text, example['answer']):
@@ -140,7 +143,7 @@ class EvaluationAccuracyCallback(TrainerCallback):
                     input_ids=batch['q_ids'].to(self.model.device),
                     attention_mask=batch["q_attention_mask"].to(self.model.device),
                     generation_config=self.generation_config,
-                    return_dict_in_generate=True
+                    return_dict_in_generate=True,
                 )
             outputs_string = self.tokenizer.batch_decode(batch_output.sequences, skip_special_tokens=True)
             for gold_ans, pred_ans in zip(batch['examples']["answer"], outputs_string):
