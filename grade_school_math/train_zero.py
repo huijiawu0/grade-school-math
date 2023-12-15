@@ -109,9 +109,9 @@ def eval(model, eval_dataloader, tokenizer):
             pred_ext = extract_answer(pred_ans)
             gold_ans_list.append(gold_ext)
             pred_ans_list.append(pred_ext)
-            print("GOLD: ", gold_ans)
-            print("PRED: ", pred_ans)
-    
+            print("GOLD: ", gold_ext, gold_ans)
+            print("PRED: ", pred_ext, pred_ans)
+
     cor = 0
     invalid = 0
     rg = range(min(len(pred_ans_list), len(gold_ans_list)))
@@ -141,10 +141,10 @@ def main():
     tokenizer.pad_token = tokenizer.unk_token
     train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples)
-    train_loader = DataLoader(train_dset, batch_size=16, shuffle=True)
+    train_loader = DataLoader(train_dset, batch_size=24, shuffle=True)
     eval_examples = get_examples("train")[:200]
     eval_dset = GSMDataset(tokenizer, eval_examples)
-    eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
+    eval_loader = DataLoader(eval_dset, batch_size=48, shuffle=False)
     
     device = torch.device("cuda")
     config = GPT2Config.from_pretrained("gpt2")
@@ -152,7 +152,7 @@ def main():
     model.to(device)
     model = torch.compile(model)
     model.train()
-    optim = AdamW(model.parameters(), lr=1e-5)
+    optim = AdamW(model.parameters(), lr=1e-3)
     
     num_epochs = 10
     num_training_steps = num_epochs * len(train_loader)
