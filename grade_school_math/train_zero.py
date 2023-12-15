@@ -174,7 +174,7 @@ def main():
             lr_scheduler.step()
             pbar.update(1)
             pbar.set_description(f"train_loss: {loss.item():.5f}")
-        eval(model, eval_loader, tokenizer)
+            eval(model, eval_loader, tokenizer)
     
     model.save_pretrained("model_ckpts/")
 
