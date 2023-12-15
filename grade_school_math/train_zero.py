@@ -148,7 +148,6 @@ def main():
     for epoch in range(num_epochs):
         for batch in train_loader:
             optim.zero_grad()
-            print(batch)
             batch = {k: v.to(device) for k, v in batch.items()}
             outputs = model(**batch, labels=batch["input_ids"])
             loss = outputs[0]
