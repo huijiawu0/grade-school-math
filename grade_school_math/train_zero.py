@@ -30,7 +30,14 @@ class GSMDataset(torch.utils.data.Dataset):
                 for i in range(len(self.examples))
             ]
         )
+        self.max_qns_len = max(
+            [
+                len(self.qns["input_ids"][i])
+                for i in range(len(self.examples))
+            ]
+        )
         print(f"Max tokens: {self.max_len}")
+        print(f"Max q tokens: {self.max_qns_len}")
     
     def __len__(self):
         return len(self.examples)
@@ -39,15 +46,20 @@ class GSMDataset(torch.utils.data.Dataset):
         qn_tokens = self.qns["input_ids"][idx]
         ans_tokens = self.ans["input_ids"][idx]
         pad_tokens = [0] * (self.max_len - len(qn_tokens) - len(ans_tokens))
-        tokens = qn_tokens + ans_tokens + pad_tokens
+        qn_pad_tokens = [0] * (self.max_qns_len - len(qn_tokens))
+        qap_tokens = qn_tokens + ans_tokens + pad_tokens
+        qp_tokens = qn_tokens + qn_pad_tokens
         mask = (
                 ([int(self.loss_on_prefix)] * len(qn_tokens))
                 + ([1] * len(ans_tokens))
                 + ([0] * len(pad_tokens))
         )
-        tokens = torch.tensor(tokens)
+        qn_mask = [1] * len(qn_tokens) + [0] * len(qn_pad_tokens)
+        qap_tokens = torch.tensor(qap_tokens)
         mask = torch.tensor(mask)
-        return dict(input_ids=tokens, attention_mask=mask)
+        qp_tokens = torch.tensor(qp_tokens)
+        qn_mask = torch.tensor(qn_mask)
+        return dict(input_ids=qap_tokens, attention_mask=mask, q_ids=qp_tokens, q_attention_mask=qn_mask)
 
 
 def extract_answer(completion):
