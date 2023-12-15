@@ -74,6 +74,7 @@ def eval(model, eval_dataloader, tokenizer):
 
 def main():
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer.pad_token = tokenizer.unk_token
     train_examples = get_examples("train.jsonl")
     train_dset = GSMDataset(tokenizer, train_examples)
     train_loader = DataLoader(train_dset, batch_size=16, shuffle=True)
