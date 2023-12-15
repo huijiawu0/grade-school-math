@@ -121,10 +121,10 @@ def get_examples(split):
 def main():
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.unk_token
-    train_examples = get_examples("train.jsonl")
+    train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples)
     train_loader = DataLoader(train_dset, batch_size=16, shuffle=True)
-    eval_examples = get_examples("test.jsonl")
+    eval_examples = get_examples("test")
     eval_dset = GSMDataset(tokenizer, eval_examples)
     eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
 
