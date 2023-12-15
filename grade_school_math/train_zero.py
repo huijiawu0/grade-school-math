@@ -59,7 +59,13 @@ class GSMDataset(torch.utils.data.Dataset):
         mask = torch.tensor(mask)
         qp_tokens = torch.tensor(qp_tokens)
         qn_mask = torch.tensor(qn_mask)
-        return dict(input_ids=qap_tokens, attention_mask=mask, q_ids=qp_tokens, q_attention_mask=qn_mask)
+        return dict(
+            input_ids=qap_tokens,
+            attention_mask=mask,
+            q_ids=qp_tokens,
+            q_attention_mask=qn_mask,
+            examples=self.examples[idx],
+        )
 
 
 def extract_answer(completion):
@@ -139,14 +145,14 @@ def main():
     eval_examples = get_examples("test")
     eval_dset = GSMDataset(tokenizer, eval_examples)
     eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
-
+    
     device = torch.device("cuda")
     config = GPT2Config.from_pretrained("gpt2")
     model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
     model.to(device)
     model.train()
     optim = AdamW(model.parameters(), lr=1e-5)
-
+    
     num_epochs = 1
     num_training_steps = num_epochs * len(train_loader)
     lr_scheduler = get_scheduler(
@@ -169,7 +175,7 @@ def main():
             pbar.update(1)
             pbar.set_description(f"train_loss: {loss.item():.5f}")
         eval(model, eval_loader, tokenizer)
-
+    
     model.save_pretrained("model_ckpts/")
 
 
