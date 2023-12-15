@@ -141,7 +141,7 @@ def main():
     tokenizer.pad_token = tokenizer.unk_token
     train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples)
-    train_loader = DataLoader(train_dset, batch_size=24, shuffle=True)
+    train_loader = DataLoader(train_dset, batch_size=20, shuffle=True)
     eval_examples = get_examples("train")[:200]
     eval_dset = GSMDataset(tokenizer, eval_examples)
     eval_loader = DataLoader(eval_dset, batch_size=48, shuffle=False)
