@@ -135,7 +135,7 @@ def main():
     model.train()
     optim = AdamW(model.parameters(), lr=1e-5)
 
-    num_epochs = 20
+    num_epochs = 1
     num_training_steps = num_epochs * len(train_loader)
     lr_scheduler = get_scheduler(
         "linear",
