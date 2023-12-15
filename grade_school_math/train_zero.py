@@ -144,7 +144,7 @@ def main():
     train_loader = DataLoader(train_dset, batch_size=16, shuffle=True)
     eval_examples = get_examples("train")[:200]
     eval_dset = GSMDataset(tokenizer, eval_examples)
-    eval_loader = DataLoader(eval_dset, batch_size=48, shuffle=False)
+    eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
     
     device = torch.device("cuda")
     config = GPT2Config.from_pretrained("gpt2")
