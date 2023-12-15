@@ -153,7 +153,7 @@ def main():
     model.train()
     optim = AdamW(model.parameters(), lr=1e-5)
     
-    num_epochs = 1
+    num_epochs = 10
     num_training_steps = num_epochs * len(train_loader)
     lr_scheduler = get_scheduler(
         "linear",
@@ -174,7 +174,7 @@ def main():
             lr_scheduler.step()
             pbar.update(1)
             pbar.set_description(f"train_loss: {loss.item():.5f}")
-            eval(model, eval_loader, tokenizer)
+        eval(model, eval_loader, tokenizer)
     
     model.save_pretrained("model_ckpts/")
 
