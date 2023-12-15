@@ -142,7 +142,7 @@ def main():
     train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples)
     train_loader = DataLoader(train_dset, batch_size=16, shuffle=True)
-    eval_examples = get_examples("test")[:200]
+    eval_examples = get_examples("train")[:200]
     eval_dset = GSMDataset(tokenizer, eval_examples)
     eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
     
