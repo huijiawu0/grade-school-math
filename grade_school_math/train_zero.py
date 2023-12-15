@@ -109,8 +109,8 @@ def eval(model, eval_dataloader, tokenizer):
             pred_ext = extract_answer(pred_ans)
             gold_ans_list.append(gold_ext)
             pred_ans_list.append(pred_ext)
-            # print("GOLD: ", gold_ans)
-            # print("PRED: ", pred_ans)
+            print("GOLD: ", gold_ans)
+            print("PRED: ", pred_ans)
     
     cor = 0
     invalid = 0
@@ -150,6 +150,7 @@ def main():
     config = GPT2Config.from_pretrained("gpt2")
     model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
     model.to(device)
+    model = torch.compile(model)
     model.train()
     optim = AdamW(model.parameters(), lr=1e-5)
     
