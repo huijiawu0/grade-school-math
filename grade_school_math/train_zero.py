@@ -5,7 +5,7 @@ import torch
 from transformers.trainer_pt_utils import LabelSmoother
 
 from dataset import read_jsonl
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, GenerationConfig
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, GenerationConfig, AutoTokenizer, AutoModelForCausalLM
 from transformers import GPT2Config, AdamW
 from transformers import get_scheduler
 from tqdm.auto import tqdm
@@ -137,7 +137,7 @@ def get_examples(split):
 
 
 def main():
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.unk_token
     train_examples = get_examples("train")
     train_dset = GSMDataset(tokenizer, train_examples)
@@ -147,8 +147,7 @@ def main():
     eval_loader = DataLoader(eval_dset, batch_size=32, shuffle=False)
     
     device = torch.device("cuda")
-    config = GPT2Config.from_pretrained("gpt2")
-    model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
+    model = AutoModelForCausalLM.from_pretrained("gpt2")
     model.to(device)
     model = torch.compile(model)
     model.train()
